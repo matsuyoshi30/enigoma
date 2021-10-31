@@ -4,6 +4,8 @@ A toy implementation for [Enigma machine](https://en.wikipedia.org/wiki/Enigma_m
 
 ## Usage
 
+Execute `go run _example/main.go_`.
+
 ```go
 package main
 
@@ -26,12 +28,12 @@ func main() {
 
 	e := enigoma.NewEnigoma(nil, nil, nil, 'd', 'k', 'x', pb)
 	fmt.Println("=============== Plain Text ===============")
-	fmt.Println(text)
+	fmt.Println(text)         // => I love Go because Gopher is so cute!!
 	fmt.Println("===============   Cipher   ===============")
-	c := e.Encrypt(text)
+	c := e.Encrypt(text)      // => H WYFU FJ VWQOJOS QTNLOS AJ IB YHXK!!
 	fmt.Println(c)
 	fmt.Println("===============   Decrypt  ===============")
-	fmt.Println(e.Decrypt(c))
+	fmt.Println(e.Decrypt(c)) // => I love Go because Gopher is so cute!!
 }
 ```
 
