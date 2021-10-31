@@ -23,6 +23,13 @@ func TestEnigoma(t *testing.T) {
 			m:    stupidTable(),
 		},
 		{
+			desc: "long text",
+			pt: "a long time ago in a galaxy far far away " +
+				"it is a period of civil war " +
+				"rebel spaceships striking from a hidden base " +
+				"have won their first victory against the evil galactic empire",
+		},
+		{
 			desc: "invalid text",
 			pt:   "Invalid Plain TEXT",
 			err:  true,
