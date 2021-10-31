@@ -10,7 +10,8 @@ import (
 
 // Enigoma ...
 type Enigoma struct {
-	Scrumble
+	s1 *Scrumble
+	s2 *Scrumble
 }
 
 // NewEnigoma ...
@@ -24,23 +25,31 @@ func NewEnigoma(m []byte) *Enigoma {
 		copy(t[:], m[:26])
 	}
 
-	return &Enigoma{
-		Scrumble: Scrumble{
-			t: t,
-		},
-	}
+	s1 := &Scrumble{t: t}
+	s2 := &Scrumble{t: t}
+
+	return &Enigoma{s1: s1, s2: s2}
 }
 
 // Encrypt ...
 func (e *Enigoma) Encrypt(pt string) string {
-	ot := e.t
+	ot1 := e.s1.t
+	ot2 := e.s2.t
 
 	var ct strings.Builder
 	for _, t := range pt {
-		fmt.Fprintf(&ct, "%s", string(e.ptoc(byte(t))))
-		e.rotate()
+		so1 := e.s1.ptoc(byte(t))
+		so2 := e.s2.ptoc(so1)
+
+		fmt.Fprintf(&ct, "%s", string(so2))
+
+		e.s1.rotate()
+		if e.s1.fullRotated() {
+			e.s2.rotate()
+		}
 	}
-	e.t = ot
+	e.s1.t, e.s1.ra = ot1, 0
+	e.s2.t, e.s2.ra = ot2, 0
 
 	return strings.ToUpper(ct.String())
 }
@@ -49,15 +58,22 @@ func (e *Enigoma) Encrypt(pt string) string {
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		fmt.Fprintf(&pt, "%s", string(e.ctop(byte(t))))
-		e.rotate()
+		so2 := e.s2.ctop(byte(t))
+		so1 := e.s1.ctop(so2)
+
+		fmt.Fprintf(&pt, "%s", string(so1))
+		e.s1.rotate()
+		if e.s1.fullRotated() {
+			e.s2.rotate()
+		}
 	}
 
 	return pt.String()
 }
 
 type Scrumble struct {
-	t [26]byte
+	t  [26]byte
+	ra int
 }
 
 // rotate
@@ -68,6 +84,12 @@ func (s *Scrumble) rotate() {
 	top := s.t[0]
 	copy(s.t[0:25], s.t[1:])
 	s.t[25] = top
+
+	s.ra = (s.ra + 1) % 26
+}
+
+func (s *Scrumble) fullRotated() bool {
+	return s.ra == 0
 }
 
 func (s *Scrumble) ptoc(b byte) byte {
