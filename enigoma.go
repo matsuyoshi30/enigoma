@@ -57,7 +57,7 @@ func (e *Enigoma) Encrypt(pt string) string {
 	_s := e.s.copyScramble()
 
 	var ct strings.Builder
-	for _, t := range pt {
+	for _, t := range strings.ToLower(pt) {
 		ec := e.p.exchange(byte(t)) // exchange by plugboard
 		o := e.convert(ec)          // convert via s1 -> s2 -> s3 -> reflector -> s3 -> s2 -> s1
 		r := e.p.exchange(o)        // exchange by plugboard again
