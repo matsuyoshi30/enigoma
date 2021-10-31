@@ -15,7 +15,7 @@ type Enigoma struct {
 }
 
 // NewEnigoma ...
-func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int, pb *PlugBoard) *Enigoma {
+func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	var t1, t2, t3 [26]byte
 
 	if !checkTable(m1) {
@@ -44,7 +44,7 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int, pb *PlugBoard) *Enigo
 
 	return &Enigoma{
 		p: pb,
-		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, NewReflector(g)))),
+		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, NewReflector(13)))),
 	}
 }
 

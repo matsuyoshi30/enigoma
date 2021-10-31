@@ -40,7 +40,7 @@ func TestEnigoma(t *testing.T) {
 			pb.AddExchange('q', 'h')
 			pb.AddExchange('g', 'n')
 
-			e := enigoma.NewEnigoma(tt.m, nil, tt.m, 'd', 'k', 'x', 13, pb)
+			e := enigoma.NewEnigoma(tt.m, nil, tt.m, 'd', 'k', 'x', pb)
 
 			c := e.Encrypt(tt.pt)
 			t.Log(c)
