@@ -54,10 +54,10 @@ func (e *Enigoma) Encrypt(pt string) string {
 
 	var ct strings.Builder
 	for _, t := range pt {
-		ec := e.p.exchange(byte(t))
-		o := e.s.CtoP(e.s.PtoC(ec))
-		result := e.p.exchange(o)
-		fmt.Fprintf(&ct, "%s", string(result))
+		ec := e.p.exchange(byte(t)) // exchange by plugboard
+		o := e.convert(ec)          // convert via s1 -> s2 -> s3 -> reflector -> s3 -> s2 -> s1
+		r := e.p.exchange(o)        // exchange by plugboard again
+		fmt.Fprintf(&ct, "%s", string(r))
 
 		e.s.Rotate()
 	}
@@ -70,15 +70,19 @@ func (e *Enigoma) Encrypt(pt string) string {
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		ec := e.p.exchange(byte(t))
-		o := e.s.CtoP(e.s.PtoC(ec))
-		result := e.p.exchange(o)
-		fmt.Fprintf(&pt, "%s", string(result))
+		ec := e.p.exchange(byte(t)) // exchange by plugboard
+		o := e.convert(ec)          // convert via s1 -> s2 -> s3 -> reflector -> s3 -> s2 -> s1
+		r := e.p.exchange(o)        // exchange by plugboard again
+		fmt.Fprintf(&pt, "%s", string(r))
 
 		e.s.Rotate()
 	}
 
 	return pt.String()
+}
+
+func (e *Enigoma) convert(b byte) byte {
+	return e.s.ctop(e.s.ptoc(b))
 }
 
 // Rotor is the interface that can rotate
@@ -104,21 +108,21 @@ func NewScramble(t [26]byte, next Rotor) *Scramble {
 	return s
 }
 
-func (s *Scramble) PtoC(b byte) byte {
+func (s *Scramble) ptoc(b byte) byte {
 	if refl, ok := s.n.(*Reflector); ok {
-		return refl.Reflect(s.t, s.ptoc(b))
+		return refl.Reflect(s.t, s._ptoc(b))
 	}
 
 	ns := s.n.(*Scramble)
-	return ns.PtoC(s.ptoc(b))
+	return ns.ptoc(s._ptoc(b))
 }
 
-func (s *Scramble) CtoP(b byte) byte {
+func (s *Scramble) ctop(b byte) byte {
 	if ns, ok := s.n.(*Scramble); ok {
-		return s.ctop(ns.CtoP(b))
+		return s._ctop(ns.ctop(b))
 	}
 
-	return s.ctop(b)
+	return s._ctop(b)
 }
 
 // Rotate of Scramble rotates scrambles
@@ -153,7 +157,7 @@ func (s *Scramble) fullRotated() bool {
 	return s.ra == 0
 }
 
-func (s *Scramble) ptoc(b byte) byte {
+func (s *Scramble) _ptoc(b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
 	}
@@ -161,7 +165,7 @@ func (s *Scramble) ptoc(b byte) byte {
 	return s.t[int(b-97)]
 }
 
-func (s *Scramble) ctop(b byte) byte {
+func (s *Scramble) _ctop(b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
 	}
