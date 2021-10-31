@@ -8,25 +8,29 @@ import (
 
 func TestEnigoma(t *testing.T) {
 	tests := []struct {
-		pt  string
-		m   []byte
-		err bool
+		desc string
+		pt   string
+		m    []byte
+		err  bool
 	}{
 		{
-			pt: "hello world",
+			desc: "simple",
+			pt:   "hello world",
 		},
 		{
-			pt: "hello world with custom table",
-			m:  stupidTable(),
+			desc: "custom table",
+			pt:   "hello world with custom table",
+			m:    stupidTable(),
 		},
 		{
-			pt:  "Invalid Plain TEXT",
-			err: true,
+			desc: "invalid text",
+			pt:   "Invalid Plain TEXT",
+			err:  true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.pt, func(t *testing.T) {
+		t.Run(tt.desc, func(t *testing.T) {
 			e := enigoma.NewEnigoma(tt.m)
 
 			c, err := e.Encrypt(tt.pt)
@@ -53,7 +57,7 @@ func stupidTable() []byte {
 	ret := make([]byte, 26)
 
 	for i := 'a'; i <= 'z'; i++ {
-		ret[i-97] = byte(i) - 32
+		ret[i-97] = byte(i)
 	}
 
 	return ret

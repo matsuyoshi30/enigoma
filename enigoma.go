@@ -48,13 +48,13 @@ func (e *Enigoma) Encrypt(pt string) (string, error) {
 	}
 	e.t = ot
 
-	return ct.String(), nil
+	return strings.ToUpper(ct.String()), nil
 }
 
 // Decrypt ...
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
-	for _, t := range ct {
+	for _, t := range strings.ToLower(ct) {
 		if t == ' ' {
 			fmt.Fprintf(&pt, "%s", " ")
 		} else {
@@ -89,7 +89,7 @@ func (s *Scrumble) ptoc(b byte) byte {
 }
 
 func (s *Scrumble) ctop(b byte) byte {
-	if b < 'A' || 'Z' < b {
+	if b < 'a' || 'z' < b {
 		panic("invalid input byte")
 	}
 
@@ -113,7 +113,7 @@ func checkTable(m []byte) bool {
 
 	exists := make(map[byte]bool)
 	for _, v := range m {
-		if v < 'A' || 'Z' < v {
+		if v < 'a' || 'z' < v {
 			return false
 		}
 
@@ -129,7 +129,8 @@ func checkTable(m []byte) bool {
 func createTable() [26]byte {
 	ret := [26]byte{}
 
-	alpha := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	// alpha := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	alpha := "abcdefghijklmnopqrstuvwxyz"
 	for i := range []byte(alpha) {
 		rand.Seed(time.Now().UnixNano())
 
