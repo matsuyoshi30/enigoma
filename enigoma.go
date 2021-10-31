@@ -10,9 +10,7 @@ import (
 
 // Enigoma ...
 type Enigoma struct {
-	s1 *Scrumble
-	s2 *Scrumble
-	s3 *Scrumble
+	s *Scrumble
 }
 
 // NewEnigoma ...
@@ -40,38 +38,22 @@ func NewEnigoma(m1, m2, m3 []byte) *Enigoma {
 		copy(t3[:], m3[:26])
 	}
 
-	s1 := &Scrumble{t: t1}
-	s2 := &Scrumble{t: t2}
-	s3 := &Scrumble{t: t3}
-
-	return &Enigoma{s1: s1, s2: s2, s3: s3}
+	return &Enigoma{
+		s: NewScrumble(t1, NewScrumble(t2, NewScrumble(t3, nil))),
+	}
 }
 
 // Encrypt ...
 func (e *Enigoma) Encrypt(pt string) string {
-	ot1 := e.s1.t
-	ot2 := e.s2.t
-	ot3 := e.s3.t
+	_s := e.s.copyScrumble()
 
 	var ct strings.Builder
 	for _, t := range pt {
-		so1 := e.s1.ptoc(byte(t))
-		so2 := e.s2.ptoc(so1)
-		so3 := e.s3.ptoc(so2)
+		fmt.Fprintf(&ct, "%s", string(e.s.PtoC(byte(t))))
 
-		fmt.Fprintf(&ct, "%s", string(so3))
-
-		e.s1.rotate()
-		if e.s1.fullRotated() {
-			e.s2.rotate()
-		}
-		if e.s2.fullRotated() {
-			e.s3.rotate()
-		}
+		e.s.Rotate()
 	}
-	e.s1.t, e.s1.ra = ot1, 0
-	e.s2.t, e.s2.ra = ot2, 0
-	e.s3.t, e.s3.ra = ot3, 0
+	e.s = _s
 
 	return strings.ToUpper(ct.String())
 }
@@ -80,18 +62,9 @@ func (e *Enigoma) Encrypt(pt string) string {
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		so3 := e.s3.ctop(byte(t))
-		so2 := e.s2.ctop(so3)
-		so1 := e.s1.ctop(so2)
+		fmt.Fprintf(&pt, "%s", string(e.s.CtoP(byte(t))))
 
-		fmt.Fprintf(&pt, "%s", string(so1))
-		e.s1.rotate()
-		if e.s1.fullRotated() {
-			e.s2.rotate()
-		}
-		if e.s2.fullRotated() {
-			e.s3.rotate()
-		}
+		e.s.Rotate()
 	}
 
 	return pt.String()
@@ -100,6 +73,44 @@ func (e *Enigoma) Decrypt(ct string) string {
 type Scrumble struct {
 	t  [26]byte
 	ra int
+
+	n *Scrumble
+}
+
+func NewScrumble(t [26]byte, next *Scrumble) *Scrumble {
+	s := &Scrumble{t: t}
+	if next != nil {
+		s.n = next
+	}
+
+	return s
+}
+
+func (s *Scrumble) PtoC(b byte) byte {
+	if s.n == nil {
+		return s.ptoc(b)
+	}
+
+	return s.n.PtoC(s.ptoc(b))
+}
+
+func (s *Scrumble) CtoP(b byte) byte {
+	if s.n == nil {
+		return s.ctop(b)
+	}
+
+	return s.ctop(s.n.CtoP(b))
+}
+
+func (s *Scrumble) Rotate() {
+	s.rotate()
+	if s.fullRotated() && s.n != nil {
+		s.n.Rotate()
+	}
+}
+
+func (s *Scrumble) copyScrumble() *Scrumble {
+	return NewScrumble(s.t, NewScrumble(s.n.t, NewScrumble(s.n.n.t, nil)))
 }
 
 // rotate
