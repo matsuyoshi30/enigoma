@@ -16,20 +16,23 @@ type SimpleSubstitutionCipherer interface {
 
 // Enigoma ...
 type Enigoma struct {
-	epl map[byte]byte
-	dcl map[byte]byte
+	t [26]byte
 }
 
 var _ SimpleSubstitutionCipherer = (*Enigoma)(nil)
 
 // NewEnigoma ...
-func NewEnigoma(m map[byte]byte) *Enigoma {
+func NewEnigoma(m []byte) *Enigoma {
+	var t [26]byte
+
 	if m == nil || !checkTable(m) {
 		log.Printf("create table for substitution")
-		m = createTable()
+		t = createTable()
+	} else {
+		copy(t[:], m[:26])
 	}
 
-	return &Enigoma{epl: m, dcl: reverseTable(m)}
+	return &Enigoma{t: t}
 }
 
 // Encrypt ...
@@ -41,7 +44,7 @@ func (e *Enigoma) Encrypt(pt string) (string, error) {
 		} else if t < 'a' || 'z' < t {
 			return "", fmt.Errorf("only 'a' to 'z' in input text")
 		} else {
-			fmt.Fprintf(&ct, "%s", string(e.epl[byte(t)]))
+			fmt.Fprintf(&ct, "%s", string(e.t[atoi(byte(t))]))
 		}
 	}
 
@@ -55,24 +58,41 @@ func (e *Enigoma) Decrypt(ct string) string {
 		if t == ' ' {
 			fmt.Fprintf(&pt, "%s", " ")
 		} else {
-			fmt.Fprintf(&pt, "%s", string(e.dcl[byte(t)]))
+			fmt.Fprintf(&pt, "%s", string(byte('a'+e.indexAt(byte(t)))))
 		}
 	}
 
 	return pt.String()
 }
 
-func checkTable(m map[byte]byte) bool {
+func (e *Enigoma) indexAt(b byte) int {
+	for i, elem := range e.t {
+		if elem == b {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func atoi(b byte) int {
+	if 'a' <= b && b <= 'z' {
+		return int(b - 97)
+	}
+	if 'A' <= b && b <= 'Z' {
+		return int(b - 65)
+	}
+
+	return -1
+}
+
+func checkTable(m []byte) bool {
 	if len(m) != 26 {
 		return false
 	}
 
 	exists := make(map[byte]bool)
-	for k, v := range m {
-		if k < 'a' || 'z' < k {
-			return false
-		}
-
+	for _, v := range m {
 		if v < 'A' || 'Z' < v {
 			return false
 		}
@@ -86,25 +106,16 @@ func checkTable(m map[byte]byte) bool {
 	return true
 }
 
-func reverseTable(m map[byte]byte) map[byte]byte {
-	ret := make(map[byte]byte)
-	for k, v := range m {
-		ret[v] = k
-	}
-
-	return ret
-}
-
-func createTable() map[byte]byte {
-	ret := make(map[byte]byte)
+func createTable() [26]byte {
+	ret := [26]byte{}
 
 	alpha := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	for _, c := range []byte(strings.ToLower(alpha)) {
+	for i := range []byte(alpha) {
 		rand.Seed(time.Now().UnixNano())
 
-		i := rand.Intn(len(alpha))
-		ret[c] = alpha[i]
-		alpha = fmt.Sprintf("%s%s", alpha[0:i], alpha[i+1:])
+		a := rand.Intn(len(alpha))
+		ret[i] = alpha[a]
+		alpha = fmt.Sprintf("%s%s", alpha[0:a], alpha[a+1:])
 	}
 
 	return ret

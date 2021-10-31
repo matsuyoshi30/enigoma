@@ -9,7 +9,7 @@ import (
 func TestEnigoma(t *testing.T) {
 	tests := []struct {
 		pt  string
-		m   map[byte]byte
+		m   []byte
 		err bool
 	}{
 		{
@@ -48,11 +48,11 @@ func TestEnigoma(t *testing.T) {
 	}
 }
 
-func stupidTable() map[byte]byte {
-	ret := make(map[byte]byte)
+func stupidTable() []byte {
+	ret := make([]byte, 26)
 
 	for i := 'a'; i <= 'z'; i++ {
-		ret[byte(i)] = byte(i) - 32
+		ret[i-97] = byte(i) - 32
 	}
 
 	return ret
