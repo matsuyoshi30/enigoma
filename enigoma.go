@@ -14,7 +14,7 @@ type Enigoma struct {
 }
 
 // NewEnigoma ...
-func NewEnigoma(m1, m2, m3 []byte) *Enigoma {
+func NewEnigoma(m1, m2, m3 []byte, g int) *Enigoma {
 	var t1, t2, t3 [26]byte
 
 	if !checkTable(m1) {
@@ -39,7 +39,7 @@ func NewEnigoma(m1, m2, m3 []byte) *Enigoma {
 	}
 
 	return &Enigoma{
-		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, nil))),
+		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, NewReflector(g)))),
 	}
 }
 
@@ -49,7 +49,7 @@ func (e *Enigoma) Encrypt(pt string) string {
 
 	var ct strings.Builder
 	for _, t := range pt {
-		fmt.Fprintf(&ct, "%s", string(e.s.PtoC(byte(t))))
+		fmt.Fprintf(&ct, "%s", string(e.s.CtoP(e.s.PtoC(byte(t)))))
 
 		e.s.Rotate()
 	}
@@ -62,7 +62,7 @@ func (e *Enigoma) Encrypt(pt string) string {
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		fmt.Fprintf(&pt, "%s", string(e.s.CtoP(byte(t))))
+		fmt.Fprintf(&pt, "%s", string(e.s.CtoP(e.s.PtoC(byte(t)))))
 
 		e.s.Rotate()
 	}
@@ -70,14 +70,18 @@ func (e *Enigoma) Decrypt(ct string) string {
 	return pt.String()
 }
 
+type Rotor interface {
+	Rotate()
+}
+
 type Scramble struct {
 	t  [26]byte
 	ra int
 
-	n *Scramble
+	n Rotor
 }
 
-func NewScramble(t [26]byte, next *Scramble) *Scramble {
+func NewScramble(t [26]byte, next Rotor) *Scramble {
 	s := &Scramble{t: t}
 	if next != nil {
 		s.n = next
@@ -87,19 +91,20 @@ func NewScramble(t [26]byte, next *Scramble) *Scramble {
 }
 
 func (s *Scramble) PtoC(b byte) byte {
-	if s.n == nil {
-		return s.ptoc(b)
+	if refl, ok := s.n.(*Reflector); ok {
+		return refl.Reflect(s.t, s.ptoc(b))
 	}
 
-	return s.n.PtoC(s.ptoc(b))
+	ns := s.n.(*Scramble)
+	return ns.PtoC(s.ptoc(b))
 }
 
 func (s *Scramble) CtoP(b byte) byte {
-	if s.n == nil {
-		return s.ctop(b)
+	if ns, ok := s.n.(*Scramble); ok {
+		return s.ctop(ns.CtoP(b))
 	}
 
-	return s.ctop(s.n.CtoP(b))
+	return s.ctop(b)
 }
 
 func (s *Scramble) Rotate() {
@@ -110,7 +115,11 @@ func (s *Scramble) Rotate() {
 }
 
 func (s *Scramble) copyScramble() *Scramble {
-	return NewScramble(s.t, NewScramble(s.n.t, NewScramble(s.n.n.t, nil)))
+	ns := s.n.(*Scramble)
+	nns := ns.n.(*Scramble)
+	refl := nns.n.(*Reflector)
+
+	return NewScramble(s.t, NewScramble(ns.t, NewScramble(nns.t, refl)))
 }
 
 // rotate
@@ -154,6 +163,40 @@ func (s *Scramble) indexAt(b byte) int {
 
 	return -1
 }
+
+type Reflector struct {
+	gap int
+}
+
+func NewReflector(g int) *Reflector {
+	if g < 1 || 25 < g {
+		rand.Seed(time.Now().UnixNano())
+		g = rand.Intn(24) + 1
+	}
+
+	return &Reflector{gap: g}
+}
+
+func (r *Reflector) Reflect(t [26]byte, b byte) byte {
+	if b < 'a' || 'z' < b {
+		return b
+	}
+
+	base := -1
+	for i, elem := range t {
+		if elem == b {
+			base = i
+			break
+		}
+	}
+	if base == -1 {
+		panic("cannot reflect")
+	}
+
+	return t[(base+r.gap)%26]
+}
+
+func (r *Reflector) Rotate() {}
 
 func checkTable(m []byte) bool {
 	if len(m) != 26 {
