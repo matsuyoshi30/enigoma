@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-// Enigoma ...
+// Enigoma represents Enigma machine
 type Enigoma struct {
 	p *PlugBoard
 	s *Scramble
 }
 
-// NewEnigoma ...
+// NewEnigoma creates new enigoma instance
 func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	var t1, t2, t3 [26]byte
 
@@ -48,7 +48,7 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	}
 }
 
-// Encrypt ...
+// Encrypt encrypts plain text to cipher
 func (e *Enigoma) Encrypt(pt string) string {
 	_s := e.s.copyScramble()
 
@@ -66,7 +66,7 @@ func (e *Enigoma) Encrypt(pt string) string {
 	return strings.ToUpper(ct.String())
 }
 
-// Decrypt ...
+// Decrypt decrypts cipher to plain text
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
@@ -81,10 +81,12 @@ func (e *Enigoma) Decrypt(ct string) string {
 	return pt.String()
 }
 
+// Rotor is the interface that can rotate
 type Rotor interface {
 	Rotate()
 }
 
+// Scramble implement a polyalphabetic substitution cipher that provides Enigma's security
 type Scramble struct {
 	t  [26]byte
 	ra int
@@ -92,6 +94,7 @@ type Scramble struct {
 	n Rotor
 }
 
+// NewScramble creates new scramble instance
 func NewScramble(t [26]byte, next Rotor) *Scramble {
 	s := &Scramble{t: t}
 	if next != nil {
@@ -118,6 +121,7 @@ func (s *Scramble) CtoP(b byte) byte {
 	return s.ctop(b)
 }
 
+// Rotate of Scramble rotates scrambles
 func (s *Scramble) Rotate() {
 	s.rotate()
 	if s.fullRotated() && s.n != nil {
@@ -175,10 +179,12 @@ func (s *Scramble) indexAt(b byte) int {
 	return -1
 }
 
+// Reflector implements reflection
 type Reflector struct {
 	gap int
 }
 
+// NewReflector creates new reflector instance
 func NewReflector(g int) *Reflector {
 	if g < 1 || 25 < g {
 		rand.Seed(time.Now().UnixNano())
@@ -188,6 +194,7 @@ func NewReflector(g int) *Reflector {
 	return &Reflector{gap: g}
 }
 
+// Reflect reflects one byte to another
 func (r *Reflector) Reflect(t [26]byte, b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
@@ -207,16 +214,20 @@ func (r *Reflector) Reflect(t [26]byte, b byte) byte {
 	return t[(base+r.gap)%26]
 }
 
+// Rotate of Reflector does nothing
 func (r *Reflector) Rotate() {}
 
+// PlugBoard permitted variable wiring that could be reconfigured by the operator
 type PlugBoard struct {
 	m map[byte]byte
 }
 
+// NewPlugBoard creates new plugboard instance
 func NewPlugBoard() *PlugBoard {
 	return &PlugBoard{m: make(map[byte]byte)}
 }
 
+// AddExchange add a wire
 func (p *PlugBoard) AddExchange(b1, b2 byte) {
 	if _, exists := p.m[b1]; exists {
 		delete(p.m, b1)
@@ -261,7 +272,6 @@ func checkTable(m []byte) bool {
 func createTable() [26]byte {
 	ret := [26]byte{}
 
-	// alpha := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	alpha := "abcdefghijklmnopqrstuvwxyz"
 	for i := range []byte(alpha) {
 		rand.Seed(time.Now().UnixNano())
