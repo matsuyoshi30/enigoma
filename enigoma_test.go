@@ -32,7 +32,15 @@ func TestEnigoma(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			e := enigoma.NewEnigoma(tt.m, nil, tt.m, 'd', 'k', 'x', 13)
+			pb := enigoma.NewPlugBoard()
+			pb.AddExchange('a', 'e')
+			pb.AddExchange('k', 't')
+			pb.AddExchange('v', 'w')
+			pb.AddExchange('j', 'c')
+			pb.AddExchange('q', 'h')
+			pb.AddExchange('g', 'n')
+
+			e := enigoma.NewEnigoma(tt.m, nil, tt.m, 'd', 'k', 'x', 13, pb)
 
 			c := e.Encrypt(tt.pt)
 			t.Log(c)

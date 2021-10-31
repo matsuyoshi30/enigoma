@@ -10,11 +10,12 @@ import (
 
 // Enigoma ...
 type Enigoma struct {
+	p *PlugBoard
 	s *Scramble
 }
 
 // NewEnigoma ...
-func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int) *Enigoma {
+func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int, pb *PlugBoard) *Enigoma {
 	var t1, t2, t3 [26]byte
 
 	if !checkTable(m1) {
@@ -42,6 +43,7 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int) *Enigoma {
 	t3 = shift(t3, k3)
 
 	return &Enigoma{
+		p: pb,
 		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, NewReflector(g)))),
 	}
 }
@@ -52,7 +54,10 @@ func (e *Enigoma) Encrypt(pt string) string {
 
 	var ct strings.Builder
 	for _, t := range pt {
-		fmt.Fprintf(&ct, "%s", string(e.s.CtoP(e.s.PtoC(byte(t)))))
+		ec := e.p.exchange(byte(t))
+		o := e.s.CtoP(e.s.PtoC(ec))
+		result := e.p.exchange(o)
+		fmt.Fprintf(&ct, "%s", string(result))
 
 		e.s.Rotate()
 	}
@@ -65,7 +70,10 @@ func (e *Enigoma) Encrypt(pt string) string {
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		fmt.Fprintf(&pt, "%s", string(e.s.CtoP(e.s.PtoC(byte(t)))))
+		ec := e.p.exchange(byte(t))
+		o := e.s.CtoP(e.s.PtoC(ec))
+		result := e.p.exchange(o)
+		fmt.Fprintf(&pt, "%s", string(result))
 
 		e.s.Rotate()
 	}
@@ -200,6 +208,35 @@ func (r *Reflector) Reflect(t [26]byte, b byte) byte {
 }
 
 func (r *Reflector) Rotate() {}
+
+type PlugBoard struct {
+	m map[byte]byte
+}
+
+func NewPlugBoard() *PlugBoard {
+	return &PlugBoard{m: make(map[byte]byte)}
+}
+
+func (p *PlugBoard) AddExchange(b1, b2 byte) {
+	if _, exists := p.m[b1]; exists {
+		delete(p.m, b1)
+	}
+	if _, exists := p.m[b2]; exists {
+		delete(p.m, b2)
+	}
+
+	p.m[b1] = b2
+	p.m[b2] = b1
+}
+
+func (p *PlugBoard) exchange(b byte) byte {
+	e, ok := p.m[b]
+	if ok {
+		return e
+	}
+
+	return b
+}
 
 func checkTable(m []byte) bool {
 	if len(m) != 26 {
