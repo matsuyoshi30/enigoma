@@ -8,13 +8,17 @@ import (
 	"time"
 )
 
-// Enigoma represents Enigma machine
+// Enigoma represents Enigma machine.
 type Enigoma struct {
 	p *PlugBoard
 	s *Scramble
 }
 
-// NewEnigoma creates new enigoma instance
+// NewEnigoma creates new enigoma instance.
+// Enigoma has three scrambles (with conversion information for at least all
+// alphabets), so it needs the key information that defines the scramble
+// settings and initial state. Enigma also has a plugboard that can be
+// configured by the operator, so we also need that information.
 func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	var t1, t2, t3 [26]byte
 
@@ -48,7 +52,7 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	}
 }
 
-// Encrypt encrypts plain text to cipher
+// Encrypt encrypts plain text to cipher.
 func (e *Enigoma) Encrypt(pt string) string {
 	_s := e.s.copyScramble()
 
@@ -66,7 +70,7 @@ func (e *Enigoma) Encrypt(pt string) string {
 	return strings.ToUpper(ct.String())
 }
 
-// Decrypt decrypts cipher to plain text
+// Decrypt decrypts cipher to plain text.
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
@@ -85,12 +89,12 @@ func (e *Enigoma) convert(b byte) byte {
 	return e.s.ctop(e.s.ptoc(b))
 }
 
-// Rotor is the interface that can rotate
+// Rotor is the interface that can rotate.
 type Rotor interface {
 	Rotate()
 }
 
-// Scramble implement a polyalphabetic substitution cipher that provides Enigma's security
+// Scramble implement a polyalphabetic substitution cipher that provides Enigma's security.
 type Scramble struct {
 	t  [26]byte
 	ra int
@@ -98,7 +102,7 @@ type Scramble struct {
 	n Rotor
 }
 
-// NewScramble creates new scramble instance
+// NewScramble creates new scramble instance.
 func NewScramble(t [26]byte, next Rotor) *Scramble {
 	s := &Scramble{t: t}
 	if next != nil {
@@ -125,7 +129,7 @@ func (s *Scramble) ctop(b byte) byte {
 	return s._ctop(b)
 }
 
-// Rotate of Scramble rotates scrambles
+// Rotate of Scramble rotates scrambles.
 func (s *Scramble) Rotate() {
 	s.rotate()
 	if s.fullRotated() && s.n != nil {
@@ -183,12 +187,12 @@ func (s *Scramble) indexAt(b byte) int {
 	return -1
 }
 
-// Reflector implements reflection
+// Reflector implements reflection.
 type Reflector struct {
 	gap int
 }
 
-// NewReflector creates new reflector instance
+// NewReflector creates new reflector instance.
 func NewReflector(g int) *Reflector {
 	if g < 1 || 25 < g {
 		rand.Seed(time.Now().UnixNano())
@@ -198,7 +202,7 @@ func NewReflector(g int) *Reflector {
 	return &Reflector{gap: g}
 }
 
-// Reflect reflects one byte to another
+// Reflect reflects one byte to another.
 func (r *Reflector) Reflect(t [26]byte, b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
@@ -218,20 +222,20 @@ func (r *Reflector) Reflect(t [26]byte, b byte) byte {
 	return t[(base+r.gap)%26]
 }
 
-// Rotate of Reflector does nothing
+// Rotate of Reflector does nothing.
 func (r *Reflector) Rotate() {}
 
-// PlugBoard permitted variable wiring that could be reconfigured by the operator
+// PlugBoard permitted variable wiring that could be reconfigured by the operator.
 type PlugBoard struct {
 	m map[byte]byte
 }
 
-// NewPlugBoard creates new plugboard instance
+// NewPlugBoard creates new plugboard instance.
 func NewPlugBoard() *PlugBoard {
 	return &PlugBoard{m: make(map[byte]byte)}
 }
 
-// AddExchange add a wire
+// AddExchange add a wire.
 func (p *PlugBoard) AddExchange(b1, b2 byte) {
 	if _, exists := p.m[b1]; exists {
 		delete(p.m, b1)
@@ -254,7 +258,7 @@ func (p *PlugBoard) exchange(b byte) byte {
 }
 
 func checkTable(m []byte) bool {
-	if len(m) != 26 {
+	if len(m) < 26 {
 		return false
 	}
 
