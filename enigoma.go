@@ -14,7 +14,7 @@ type Enigoma struct {
 }
 
 // NewEnigoma ...
-func NewEnigoma(m1, m2, m3 []byte, g int) *Enigoma {
+func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, g int) *Enigoma {
 	var t1, t2, t3 [26]byte
 
 	if !checkTable(m1) {
@@ -23,6 +23,7 @@ func NewEnigoma(m1, m2, m3 []byte, g int) *Enigoma {
 	} else {
 		copy(t1[:], m1[:26])
 	}
+	t1 = shift(t1, k1)
 
 	if !checkTable(m2) {
 		log.Printf("create table for substitution")
@@ -30,6 +31,7 @@ func NewEnigoma(m1, m2, m3 []byte, g int) *Enigoma {
 	} else {
 		copy(t2[:], m2[:26])
 	}
+	t2 = shift(t2, k2)
 
 	if !checkTable(m3) {
 		log.Printf("create table for substitution")
@@ -37,6 +39,7 @@ func NewEnigoma(m1, m2, m3 []byte, g int) *Enigoma {
 	} else {
 		copy(t3[:], m3[:26])
 	}
+	t3 = shift(t3, k3)
 
 	return &Enigoma{
 		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, NewReflector(g)))),
@@ -231,5 +234,23 @@ func createTable() [26]byte {
 		alpha = fmt.Sprintf("%s%s", alpha[0:a], alpha[a+1:])
 	}
 
+	return ret
+}
+
+func shift(t [26]byte, k byte) [26]byte {
+	top := -1
+	for i, elem := range t {
+		if elem == k {
+			top = i
+			break
+		}
+	}
+	if top == -1 {
+		panic("invalid key")
+	}
+
+	var ret [26]byte
+	copy(ret[:], t[top:])
+	copy(ret[len(t[top:]):], t[:top])
 	return ret
 }
