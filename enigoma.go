@@ -19,7 +19,7 @@ type Enigoma struct {
 func NewEnigoma(m []byte) *Enigoma {
 	var t [26]byte
 
-	if m == nil || !checkTable(m) {
+	if !checkTable(m) {
 		log.Printf("create table for substitution")
 		t = createTable()
 	} else {
