@@ -30,10 +30,10 @@ func main() {
 	fmt.Println("=============== Plain Text ===============")
 	fmt.Println(text)         // => I love Go because Gopher is so cute!!
 	fmt.Println("===============   Cipher   ===============")
-	c := e.Encrypt(text)      // => H WYFU FJ VWQOJOS QTNLOS AJ IB YHXK!!
-	fmt.Println(c)
+	c := e.Encrypt(text)
+	fmt.Println(c)            // => H WYFU FJ VWQOJOS QTNLOS AJ IB YHXK!!
 	fmt.Println("===============   Decrypt  ===============")
-	fmt.Println(e.Decrypt(c)) // => I love Go because Gopher is so cute!!
+	fmt.Println(e.Decrypt(c)) // => i love go because gopher is so cute!!
 }
 ```
 
