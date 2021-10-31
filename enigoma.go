@@ -16,19 +16,33 @@ type Enigoma struct {
 }
 
 // NewEnigoma ...
-func NewEnigoma(m []byte) *Enigoma {
-	var t [26]byte
+func NewEnigoma(m1, m2, m3 []byte) *Enigoma {
+	var t1, t2, t3 [26]byte
 
-	if !checkTable(m) {
+	if !checkTable(m1) {
 		log.Printf("create table for substitution")
-		t = createTable()
+		t1 = createTable()
 	} else {
-		copy(t[:], m[:26])
+		copy(t1[:], m1[:26])
 	}
 
-	s1 := &Scrumble{t: t}
-	s2 := &Scrumble{t: t}
-	s3 := &Scrumble{t: t}
+	if !checkTable(m2) {
+		log.Printf("create table for substitution")
+		t2 = createTable()
+	} else {
+		copy(t2[:], m2[:26])
+	}
+
+	if !checkTable(m3) {
+		log.Printf("create table for substitution")
+		t3 = createTable()
+	} else {
+		copy(t3[:], m3[:26])
+	}
+
+	s1 := &Scrumble{t: t1}
+	s2 := &Scrumble{t: t2}
+	s3 := &Scrumble{t: t3}
 
 	return &Enigoma{s1: s1, s2: s2, s3: s3}
 }

@@ -32,7 +32,7 @@ func TestEnigoma(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			e := enigoma.NewEnigoma(tt.m)
+			e := enigoma.NewEnigoma(tt.m, nil, tt.m)
 
 			c := e.Encrypt(tt.pt)
 			t.Log(c)
