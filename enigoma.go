@@ -32,34 +32,24 @@ func NewEnigoma(m []byte) *Enigoma {
 }
 
 // Encrypt ...
-func (e *Enigoma) Encrypt(pt string) (string, error) {
+func (e *Enigoma) Encrypt(pt string) string {
 	ot := e.t
 
 	var ct strings.Builder
 	for _, t := range pt {
-		if t == ' ' {
-			fmt.Fprintf(&ct, "%s", " ")
-		} else if t < 'a' || 'z' < t {
-			return "", fmt.Errorf("only 'a' to 'z' in input text")
-		} else {
-			fmt.Fprintf(&ct, "%s", string(e.ptoc(byte(t))))
-		}
+		fmt.Fprintf(&ct, "%s", string(e.ptoc(byte(t))))
 		e.rotate()
 	}
 	e.t = ot
 
-	return strings.ToUpper(ct.String()), nil
+	return strings.ToUpper(ct.String())
 }
 
 // Decrypt ...
 func (e *Enigoma) Decrypt(ct string) string {
 	var pt strings.Builder
 	for _, t := range strings.ToLower(ct) {
-		if t == ' ' {
-			fmt.Fprintf(&pt, "%s", " ")
-		} else {
-			fmt.Fprintf(&pt, "%s", string(e.ctop(byte(t))))
-		}
+		fmt.Fprintf(&pt, "%s", string(e.ctop(byte(t))))
 		e.rotate()
 	}
 
@@ -82,7 +72,7 @@ func (s *Scrumble) rotate() {
 
 func (s *Scrumble) ptoc(b byte) byte {
 	if b < 'a' || 'z' < b {
-		panic("invalid input byte")
+		return b
 	}
 
 	return s.t[int(b-97)]
@@ -90,7 +80,7 @@ func (s *Scrumble) ptoc(b byte) byte {
 
 func (s *Scrumble) ctop(b byte) byte {
 	if b < 'a' || 'z' < b {
-		panic("invalid input byte")
+		return b
 	}
 
 	return byte('a' + s.indexAt(b))

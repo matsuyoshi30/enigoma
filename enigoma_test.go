@@ -11,7 +11,6 @@ func TestEnigoma(t *testing.T) {
 		desc string
 		pt   string
 		m    []byte
-		err  bool
 	}{
 		{
 			desc: "simple",
@@ -29,27 +28,13 @@ func TestEnigoma(t *testing.T) {
 				"rebel spaceships striking from a hidden base " +
 				"have won their first victory against the evil galactic empire",
 		},
-		{
-			desc: "invalid text",
-			pt:   "Invalid Plain TEXT",
-			err:  true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			e := enigoma.NewEnigoma(tt.m)
 
-			c, err := e.Encrypt(tt.pt)
-			if tt.err {
-				if err == nil {
-					t.Fatal("want error but got nil")
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("want no error but got %v", err)
-			}
+			c := e.Encrypt(tt.pt)
 			t.Log(c)
 			a := e.Decrypt(c)
 
