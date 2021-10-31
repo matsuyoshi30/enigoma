@@ -2,7 +2,6 @@ package enigoma
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -15,15 +14,17 @@ type Enigoma struct {
 }
 
 // NewEnigoma creates new enigoma instance.
+//
 // Enigoma has three scrambles (with conversion information for at least all
 // alphabets), so it needs the key information that defines the scramble
 // settings and initial state. Enigma also has a plugboard that can be
 // configured by the operator, so we also need that information.
+//
+// If given information for the scramble is invalid, create it internally.
 func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	var t1, t2, t3 [26]byte
 
 	if !checkTable(m1) {
-		log.Printf("create table for substitution")
 		t1 = createTable()
 	} else {
 		copy(t1[:], m1[:26])
@@ -31,7 +32,6 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	t1 = shift(t1, k1)
 
 	if !checkTable(m2) {
-		log.Printf("create table for substitution")
 		t2 = createTable()
 	} else {
 		copy(t2[:], m2[:26])
@@ -39,7 +39,6 @@ func NewEnigoma(m1, m2, m3 []byte, k1, k2, k3 byte, pb *PlugBoard) *Enigoma {
 	t2 = shift(t2, k2)
 
 	if !checkTable(m3) {
-		log.Printf("create table for substitution")
 		t3 = createTable()
 	} else {
 		copy(t3[:], m3[:26])
