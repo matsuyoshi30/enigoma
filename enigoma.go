@@ -8,18 +8,10 @@ import (
 	"time"
 )
 
-// SimpleSubstitutionCipherer ...
-type SimpleSubstitutionCipherer interface {
-	Encrypt(string) (string, error)
-	Decrypt(string) string
-}
-
 // Enigoma ...
 type Enigoma struct {
-	t [26]byte
+	Scrumble
 }
-
-var _ SimpleSubstitutionCipherer = (*Enigoma)(nil)
 
 // NewEnigoma ...
 func NewEnigoma(m []byte) *Enigoma {
@@ -32,11 +24,17 @@ func NewEnigoma(m []byte) *Enigoma {
 		copy(t[:], m[:26])
 	}
 
-	return &Enigoma{t: t}
+	return &Enigoma{
+		Scrumble: Scrumble{
+			t: t,
+		},
+	}
 }
 
 // Encrypt ...
 func (e *Enigoma) Encrypt(pt string) (string, error) {
+	ot := e.t
+
 	var ct strings.Builder
 	for _, t := range pt {
 		if t == ' ' {
@@ -44,9 +42,11 @@ func (e *Enigoma) Encrypt(pt string) (string, error) {
 		} else if t < 'a' || 'z' < t {
 			return "", fmt.Errorf("only 'a' to 'z' in input text")
 		} else {
-			fmt.Fprintf(&ct, "%s", string(e.t[atoi(byte(t))]))
+			fmt.Fprintf(&ct, "%s", string(e.ptoc(byte(t))))
 		}
+		e.rotate()
 	}
+	e.t = ot
 
 	return ct.String(), nil
 }
@@ -58,29 +58,49 @@ func (e *Enigoma) Decrypt(ct string) string {
 		if t == ' ' {
 			fmt.Fprintf(&pt, "%s", " ")
 		} else {
-			fmt.Fprintf(&pt, "%s", string(byte('a'+e.indexAt(byte(t)))))
+			fmt.Fprintf(&pt, "%s", string(e.ctop(byte(t))))
 		}
+		e.rotate()
 	}
 
 	return pt.String()
 }
 
-func (e *Enigoma) indexAt(b byte) int {
-	for i, elem := range e.t {
+type Scrumble struct {
+	t [26]byte
+}
+
+// rotate
+// A B C D ... Z
+// to
+// B C D E ... A
+func (s *Scrumble) rotate() {
+	top := s.t[0]
+	copy(s.t[0:25], s.t[1:])
+	s.t[25] = top
+}
+
+func (s *Scrumble) ptoc(b byte) byte {
+	if b < 'a' || 'z' < b {
+		panic("invalid input byte")
+	}
+
+	return s.t[int(b-97)]
+}
+
+func (s *Scrumble) ctop(b byte) byte {
+	if b < 'A' || 'Z' < b {
+		panic("invalid input byte")
+	}
+
+	return byte('a' + s.indexAt(b))
+}
+
+func (s *Scrumble) indexAt(b byte) int {
+	for i, elem := range s.t {
 		if elem == b {
 			return i
 		}
-	}
-
-	return -1
-}
-
-func atoi(b byte) int {
-	if 'a' <= b && b <= 'z' {
-		return int(b - 97)
-	}
-	if 'A' <= b && b <= 'Z' {
-		return int(b - 65)
 	}
 
 	return -1

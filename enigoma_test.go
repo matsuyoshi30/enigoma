@@ -39,6 +39,7 @@ func TestEnigoma(t *testing.T) {
 			if err != nil {
 				t.Fatalf("want no error but got %v", err)
 			}
+			t.Log(c)
 			a := e.Decrypt(c)
 
 			if tt.pt != a {
