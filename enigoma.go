@@ -10,7 +10,7 @@ import (
 
 // Enigoma ...
 type Enigoma struct {
-	s *Scrumble
+	s *Scramble
 }
 
 // NewEnigoma ...
@@ -39,13 +39,13 @@ func NewEnigoma(m1, m2, m3 []byte) *Enigoma {
 	}
 
 	return &Enigoma{
-		s: NewScrumble(t1, NewScrumble(t2, NewScrumble(t3, nil))),
+		s: NewScramble(t1, NewScramble(t2, NewScramble(t3, nil))),
 	}
 }
 
 // Encrypt ...
 func (e *Enigoma) Encrypt(pt string) string {
-	_s := e.s.copyScrumble()
+	_s := e.s.copyScramble()
 
 	var ct strings.Builder
 	for _, t := range pt {
@@ -70,15 +70,15 @@ func (e *Enigoma) Decrypt(ct string) string {
 	return pt.String()
 }
 
-type Scrumble struct {
+type Scramble struct {
 	t  [26]byte
 	ra int
 
-	n *Scrumble
+	n *Scramble
 }
 
-func NewScrumble(t [26]byte, next *Scrumble) *Scrumble {
-	s := &Scrumble{t: t}
+func NewScramble(t [26]byte, next *Scramble) *Scramble {
+	s := &Scramble{t: t}
 	if next != nil {
 		s.n = next
 	}
@@ -86,7 +86,7 @@ func NewScrumble(t [26]byte, next *Scrumble) *Scrumble {
 	return s
 }
 
-func (s *Scrumble) PtoC(b byte) byte {
+func (s *Scramble) PtoC(b byte) byte {
 	if s.n == nil {
 		return s.ptoc(b)
 	}
@@ -94,7 +94,7 @@ func (s *Scrumble) PtoC(b byte) byte {
 	return s.n.PtoC(s.ptoc(b))
 }
 
-func (s *Scrumble) CtoP(b byte) byte {
+func (s *Scramble) CtoP(b byte) byte {
 	if s.n == nil {
 		return s.ctop(b)
 	}
@@ -102,22 +102,22 @@ func (s *Scrumble) CtoP(b byte) byte {
 	return s.ctop(s.n.CtoP(b))
 }
 
-func (s *Scrumble) Rotate() {
+func (s *Scramble) Rotate() {
 	s.rotate()
 	if s.fullRotated() && s.n != nil {
 		s.n.Rotate()
 	}
 }
 
-func (s *Scrumble) copyScrumble() *Scrumble {
-	return NewScrumble(s.t, NewScrumble(s.n.t, NewScrumble(s.n.n.t, nil)))
+func (s *Scramble) copyScramble() *Scramble {
+	return NewScramble(s.t, NewScramble(s.n.t, NewScramble(s.n.n.t, nil)))
 }
 
 // rotate
 // A B C D ... Z
 // to
 // B C D E ... A
-func (s *Scrumble) rotate() {
+func (s *Scramble) rotate() {
 	top := s.t[0]
 	copy(s.t[0:25], s.t[1:])
 	s.t[25] = top
@@ -125,11 +125,11 @@ func (s *Scrumble) rotate() {
 	s.ra = (s.ra + 1) % 26
 }
 
-func (s *Scrumble) fullRotated() bool {
+func (s *Scramble) fullRotated() bool {
 	return s.ra == 0
 }
 
-func (s *Scrumble) ptoc(b byte) byte {
+func (s *Scramble) ptoc(b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
 	}
@@ -137,7 +137,7 @@ func (s *Scrumble) ptoc(b byte) byte {
 	return s.t[int(b-97)]
 }
 
-func (s *Scrumble) ctop(b byte) byte {
+func (s *Scramble) ctop(b byte) byte {
 	if b < 'a' || 'z' < b {
 		return b
 	}
@@ -145,7 +145,7 @@ func (s *Scrumble) ctop(b byte) byte {
 	return byte('a' + s.indexAt(b))
 }
 
-func (s *Scrumble) indexAt(b byte) int {
+func (s *Scramble) indexAt(b byte) int {
 	for i, elem := range s.t {
 		if elem == b {
 			return i
